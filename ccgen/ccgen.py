@@ -3,9 +3,9 @@ import argparse
 
 from jinja2 import Template, Environment, FileSystemLoader
 
-from cql import CqlGenerator
-from java import JavaGenerator
-from generator import Generator
+from .cql import CqlGenerator
+from .java import JavaGenerator
+from .generator import Generator
 
 def _write_file(name, directory, contents):
     if not os.path.exists(directory):

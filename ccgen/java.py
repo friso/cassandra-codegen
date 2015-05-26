@@ -1,9 +1,10 @@
 import os
 
 from abc import ABCMeta, abstractmethod
-from generator import Generator, GeneratorRepresentable
 from enum import Enum
 from collections import OrderedDict
+
+from .generator import Generator, GeneratorRepresentable
 
 class JavaType(GeneratorRepresentable):
     __metaclass__ = ABCMeta

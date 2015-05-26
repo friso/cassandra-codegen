@@ -30,9 +30,6 @@ setup(
     keywords='cassandra CQL',
     packages=[
         'ccgen',
-        'ccgen.cql',
-        'ccgen.java',
-        'ccgen.generator'
         # 'ccgen.xxx',
     ],
     install_requires=[
