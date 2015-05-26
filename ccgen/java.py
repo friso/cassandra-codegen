@@ -104,14 +104,14 @@ class JavaGenerator(Generator):
     def __init__(self, yaml_file, dir_name):
         super().__init__(yaml_file)
 
-        for type_name, type_config in self.config['types'].items():
+        for type_name, type_config in self.config.get('types', {}).items():
             self.add_file(
                 '%s.java' % JavaType.classnamify(type_name),
                 'java_type.j2',
                 self._get_type(type_name, type_config),
                 os.path.join(dir_name, self.config['options']['package'].replace('.', os.path.sep)))
 
-        for table_name, table_config in self.config['tables'].items():
+        for table_name, table_config in self.config.get('tables', {}).items():
             self.add_file(
                 '%s.java' % JavaType.classnamify(table_name),
                 'java_class.j2',
@@ -145,7 +145,7 @@ class JavaGenerator(Generator):
             'set': lambda t: JavaType.set(self._java_type(t['entries'], True))
         }
 
-        if config['type'] in self.config['types'].keys():
+        if config['type'] in self.config.get('types', {}).keys():
             return JavaType.user_defined(config['type'])
         else:
             return transformers[config['type']](config)
@@ -174,7 +174,7 @@ class JavaGenerator(Generator):
             'set': lambda t: '{variable}.getSet("{cql_name}", %s.class)' % self._java_type(t['entries'], True).repr()
         }
 
-        if config['type'] in self.config['types'].keys():
+        if config['type'] in self.config.get('types', {}).keys():
             return 'new %s({variable}.getUDTValue("{cql_name}"))' % self._java_type(config).repr()
         else:
             return transformers[config['type']](config)

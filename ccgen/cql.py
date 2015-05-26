@@ -126,10 +126,10 @@ class CqlGenerator(Generator):
         self.cql_types = []
         self.cql_tables = []
 
-        for type_name, type_config in self.config['types'].items():
+        for type_name, type_config in self.config.get('types', {}).items():
             self._add_type(type_name, type_config)
 
-        for table_name, table_config in self.config['tables'].items():
+        for table_name, table_config in self.config.get('tables', {}).items():
             self._add_table(table_name, table_config)
 
         self.add_file(file_name, 'cql.j2', self, dir_name)
@@ -145,7 +145,7 @@ class CqlGenerator(Generator):
             'set': lambda t: CqlType.set(self._cql_type(t['entries']))
         }
 
-        if config['type'] in self.config['types'].keys():
+        if config['type'] in self.config.get('types', {}).keys():
             return CqlType.user_defined(config['type'])
         else:
             return transformers.get(config['type'], lambda t: CqlType.simple(t['type']))(config)
