@@ -1,0 +1,82 @@
+---
+options:
+  package: com.example.cassandra
+
+types:
+  nested_type:
+    left: boolean
+    right: boolean
+    stuff:
+      type: map
+      keys: varchar
+      values: int
+  bar_type:
+    foo: varchar
+    bar: int
+    nested: nested_type
+
+tables:
+  basic_table:
+    fields:
+      ascii_field:
+          type: ascii
+      bigint_field:
+          type: bigint
+      blob_field: blob
+      boolean_field: boolean
+      decimal_field: decimal
+      double_field: double
+      float_field: float
+      inet_field: inet
+      int_field: int
+      list_field:
+          type: list
+          entries: varchar
+      map_field:
+          type: map
+          keys: varchar
+          values: nested_type
+      set_field:
+          type: set
+          entries: varchar
+      text_field: text
+      timestamp_field: timestamp
+      timeuuid_field: timeuuid
+      # tuple_field: tuple # Not supporting tuples for now
+      uuid_field: uuid
+      varchar_field: varchar
+      varint_field: varint
+    partition_key:
+      - varchar_field
+      - int_field
+    clustering:
+      timestamp_field: desc
+      uuid_field: asc
+    options:
+      comment: This text will be outdated soon.
+      compaction:
+        class: SizeTieredCompactionStrategy
+        min_threshold: 6
+
+  udt_table:
+    fields:
+      foo: varchar
+      bar: bar_type
+    partition_key:
+      - foo
+
+  no_clustering:
+    fields:
+      pk: varchar
+      foo: varchar
+    partition_key:
+      - pk
+    options:
+      comment: No clustering columns.
+
+  no_options:
+    fields:
+      pk: varchar
+      foo: varchar
+    partition_key:
+      - pk

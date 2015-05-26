@@ -1,0 +1,14 @@
+package {{ data.package }};
+
+public final class {{ data.java_name }} {{'{'}}
+  {% for field in data.fields %}public final {{ field.java_type.repr() }} {{ field.java_name }};
+  {% endfor %}
+  public {{ data.java_name }}({% for field in data.fields %}
+    final {{ field.java_type.repr() }} {{ field.java_name }}{% if not loop.last %},{% endif %}{%endfor %}) {{'{'}}
+    {% for field in data.fields %}  this.{{ field.java_name }} = {{ field.java_name }};
+    {% endfor %}{{'}'}}
+
+  public {{ data.java_name }}(final com.datastax.driver.core.UDTValue value) {{'{'}}
+  {% for field in data.fields %}  this.{{ field.java_name }} = {{ field.getter('value') }};
+  {% endfor %}{{'}'}}
+{{'}'}}

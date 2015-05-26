@@ -1,0 +1,43 @@
+package {{ data.package }};
+
+import java.util.stream.StreamSupport;
+
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+
+public final class {{ data.java_name }} {{'{'}}
+  {% for field in data.fields %}public final {{ field.java_type.repr() }} {{ field.java_name }};
+  {% endfor %}
+  public static final {{ data.java_name }}Fields fields = new {{ data.java_name }}Fields();
+  public static final String table = "{{ data.cql_name }}";
+
+  public static class {{ data.java_name }}Fields {{'{'}}
+    private {{ data.java_name }}Fields() {{'{'}}{{'}'}}
+  {% for field in data.fields %}  public final String {{ field.java_name }} = "{{ field.cql_name }}";
+  {% endfor %}{{'}'}}
+
+  public {{ data.java_name }}({% for field in data.fields %}
+    final {{ field.java_type.repr() }} {{ field.java_name }}{% if not loop.last %},{% endif %}{%endfor %}) {{'{'}}
+  {% for field in data.fields %}    this.{{ field.java_name }} = {{ field.java_name }};
+  {% endfor %}{{'}'}}
+  
+  public static java.util.List<{{ data.java_name }}> all(final ResultSet result) {{'{'}}
+    Builder<{{ data.java_name }}> builder = ImmutableList.builder();
+    StreamSupport
+      .stream(result.spliterator(), false)
+      .map({{ data.java_name }}::fromRow)
+      .forEach(builder::add);
+    return builder.build();
+  {{'}'}}
+
+  public static {{ data.java_name }} one(final ResultSet rs) {{'{'}}
+    return fromRow(rs.one());
+  {{'}'}}
+
+  private static {{ data.java_name }} fromRow(final Row row) {{'{'}}
+    return new {{ data.java_name }}({% for field in data.fields %}
+    {{ field.getter('row') }}{% if not loop.last %},{% endif %}{% endfor %});
+  {{'}'}}
+{{'}'}}

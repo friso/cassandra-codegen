@@ -1,0 +1,13 @@
+{% for type_def in data.cql_types %}CREATE TYPE {{ type_def.name }} ({% for field_def in type_def.fields %}
+  {{ field_def.name }} {{ field_def.cql_type.repr() }}{% if not loop.last %},{% endif %}{% endfor %}
+);
+
+{% endfor %}{% for table_def in data.cql_tables %}
+CREATE TABLE {{ table_def.name }} ({% for field_def in table_def.fields %}
+  {{ field_def.name }} {{ field_def.cql_type.repr() }},{% endfor %}
+  PRIMARY KEY (({{ table_def.partition_key | join(', ') }}){% if table_def.has_clustering %}, {{ table_def.clustering | join(', ', 'field_name') }}{% endif %})
+){% if table_def.has_clustering or table_def.has_options %} WITH{% endif %}{% if table_def.has_clustering %}
+  CLUSTERING ORDER BY ({%for clustering in table_def.clustering %}{{ clustering.field_name }} {{ clustering.order }}{% if not loop.last %}, {% endif %}{% endfor %}){% if table_def.has_options %} AND{% endif %}{% endif %}{% if table_def.has_options %}
+{% for option in table_def.options %}  {{ option.name }} = {{ option.repr() }}{% if not loop.last %} AND
+{% endif %}{% endfor %}{% endif %};
+{% endfor %}
