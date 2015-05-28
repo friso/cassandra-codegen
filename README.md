@@ -218,3 +218,7 @@ optional arguments:
   --cql CQL_SOURCE_FILE, -c CQL_SOURCE_FILE
                         Output directory for the generated CQL source files.
 ```
+## Caveats
+- `timestamp` fields will be `java.time.Instant`, not `java.util.Date`.
+- Cassandra `tuple` type is not supported.
+- Generated source code is compatible with Java >= 8.
