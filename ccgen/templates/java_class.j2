@@ -67,7 +67,7 @@ public final class {{ data.java_name }} {{'{'}}
     public Statement update(final Session session) {
         final KeyspaceMetadata meta = session.getCluster().getMetadata().getKeyspace("{{ config.options.keyspace }}");
         return QueryBuilder
-                .update(keyspace, table){% for field in data.fields %}
+                .update(keyspace, table){% for field in data.fields | selectattr('is_not_key') %}
                 .{% if loop.first %}with{%else%}and{%endif%}(set("{{ field.cql_name }}", {{ field.convert('meta') }})){%endfor%}{% for field in data.fields | selectattr('is_key') %}
                 .{% if loop.first %}where{% else %}and{% endif %}(eq("{{ field.cql_name }}", {{ field.convert('meta') }})){% endfor %};
     }

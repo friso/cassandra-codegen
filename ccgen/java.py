@@ -83,6 +83,10 @@ class JavaFieldDefinition():
     def cql_name(self):
         return self.name
 
+    @property
+    def is_not_key(self):
+        return not self.is_key
+
     def convert(self, keyspace_variable):
         return self.converter_format.format(java_name=self.java_name, cql_name=self.cql_name, keyspace_variable=keyspace_variable)
 
@@ -247,6 +251,6 @@ class JavaGenerator(Generator):
                 self._getter_format(type_config),
                 self._setter_format(type_config),
                 self._converter_format(type_config),
-                field_name in config['partition_key'])
+                field_name in config['partition_key'] or field_name in config.get('clustering', {}).keys())
 
         return result
