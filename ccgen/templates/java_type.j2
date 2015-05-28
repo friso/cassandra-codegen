@@ -1,14 +1,24 @@
 package {{ data.package }};
 
+import com.datastax.driver.core.KeyspaceMetadata;
+import com.datastax.driver.core.UDTValue;
+
+@SuppressWarnings("all")
 public final class {{ data.java_name }} {{'{'}}
-  {% for field in data.fields %}public final {{ field.java_type.repr() }} {{ field.java_name }};
-  {% endfor %}
-  public {{ data.java_name }}({% for field in data.fields %}
-    final {{ field.java_type.repr() }} {{ field.java_name }}{% if not loop.last %},{% endif %}{%endfor %}) {{'{'}}
-    {% for field in data.fields %}  this.{{ field.java_name }} = {{ field.java_name }};
+    {% for field in data.fields %}public final {{ field.java_type.repr() }} {{ field.java_name }};
+    {% endfor %}
+    public {{ data.java_name }}({% for field in data.fields %}
+            final {{ field.java_type.repr() }} {{ field.java_name }}{% if not loop.last %},{% endif %}{%endfor %}) {{'{'}}
+    {% for field in data.fields %}    this.{{ field.java_name }} = {{ field.java_name }};
     {% endfor %}{{'}'}}
 
-  public {{ data.java_name }}(final com.datastax.driver.core.UDTValue value) {{'{'}}
-  {% for field in data.fields %}  this.{{ field.java_name }} = {{ field.getter('value') }};
-  {% endfor %}{{'}'}}
+    public {{ data.java_name }}(final com.datastax.driver.core.UDTValue value) {{'{'}}
+    {% for field in data.fields %}    this.{{ field.java_name }} = {{ field.getter('value') }};
+    {% endfor %}{{'}'}}
+
+    public UDTValue toUDTValue(final KeyspaceMetadata meta) {
+        final UDTValue value = meta.getUserType("test").newValue();
+        {% for field in data.fields %}value{{ field.setter(field.convert('meta')) }};
+        {% endfor %}return value;
+    }
 {{'}'}}

@@ -1,6 +1,7 @@
 ---
 options:
   package: com.example.cassandra
+  keyspace: example
 
 types:
   nested_type:

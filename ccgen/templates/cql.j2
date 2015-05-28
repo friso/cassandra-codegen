@@ -1,3 +1,5 @@
+USE {{ config.options.keyspace }};
+
 {% for type_def in data.cql_types %}CREATE TYPE {{ type_def.name }} ({% for field_def in type_def.fields %}
   {{ field_def.name }} {{ field_def.cql_type.repr() }}{% if not loop.last %},{% endif %}{% endfor %}
 );

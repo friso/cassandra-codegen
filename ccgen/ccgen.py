@@ -24,12 +24,12 @@ def _main():
         cql_generator = CqlGenerator(fn, cql_dir, cql_file)
         for f in cql_generator.files:
             template = env.get_template(f.template)
-            _write_file(f.name, f.directory, template.render(data=f.data))
+            _write_file(f.name, f.directory, template.render(data=f.data, config=cql_generator.config))
 
         java_generator = JavaGenerator(fn, java_dir)
         for f in java_generator.files:
             template = env.get_template(f.template)
-            _write_file(f.name, f.directory, template.render(data=f.data))
+            _write_file(f.name, f.directory, template.render(data=f.data, config=java_generator.config))
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Generate CQL DDL and Java POJOs from YAML descriptions of Cassandra tables.')
