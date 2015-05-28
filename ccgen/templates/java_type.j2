@@ -17,7 +17,7 @@ public final class {{ data.java_name }} {{'{'}}
     {% endfor %}{{'}'}}
 
     public UDTValue toUDTValue(final KeyspaceMetadata meta) {
-        final UDTValue value = meta.getUserType("test").newValue();
+        final UDTValue value = meta.getUserType("{{ data.cql_name }}").newValue();
         {% for field in data.fields %}value{{ field.setter(field.convert('meta')) }};
         {% endfor %}return value;
     }
