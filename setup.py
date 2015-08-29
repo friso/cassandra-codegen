@@ -42,6 +42,7 @@ setup(
     },
     package_data={
         # 'sample': ['package_data.dat'],
+        'ccgen': ['templates/*']
     },
     data_files=[],
     entry_points={

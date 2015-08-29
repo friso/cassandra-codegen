@@ -13,6 +13,7 @@ pip install -U git+https://github.com/friso/cassandra-codegen.git
 ---
 options:
   package: com.example.dto
+  keyspace: example
 
 types:
   nested_type:
@@ -51,6 +52,8 @@ tables:
 
 ### Generated CQL
 ```cql
+USE example;
+
 CREATE TYPE nested_type (
   foo varchar,
   other_field int,
@@ -82,25 +85,37 @@ CREATE TABLE my_table (
 ```java
 package com.example.dto;
 
+import com.datastax.driver.core.KeyspaceMetadata;
+import com.datastax.driver.core.UDTValue;
+
+@SuppressWarnings("all")
 public final class NestedType {
-  public final String foo;
-  public final int otherField;
-  public final java.util.Map<Integer,String> complexField;
-  
-  public NestedType(
-    final String foo,
-    final int otherField,
-    final java.util.Map<Integer,String> complexField) {
-      this.foo = foo;
-      this.otherField = otherField;
-      this.complexField = complexField;
+    public final String foo;
+    public final int otherField;
+    public final java.util.Map<Integer,String> complexField;
+    
+    public NestedType(
+            final String foo,
+            final int otherField,
+            final java.util.Map<Integer,String> complexField) {
+        this.foo = foo;
+        this.otherField = otherField;
+        this.complexField = complexField;
     }
 
-  public NestedType(final com.datastax.driver.core.UDTValue value) {
-    this.foo = value.getString("foo");
-    this.otherField = value.getInt("other_field");
-    this.complexField = value.getMap("complex_field", Integer.class, String.class);
-  }
+    public NestedType(final com.datastax.driver.core.UDTValue value) {
+        this.foo = value.getString("foo");
+        this.otherField = value.getInt("other_field");
+        this.complexField = value.getMap("complex_field", Integer.class, String.class);
+    }
+
+    public UDTValue toUDTValue(final KeyspaceMetadata meta) {
+        final UDTValue value = meta.getUserType("nested_type").newValue();
+        value.setString("foo", foo);
+        value.setInt("other_field", otherField);
+        value.setMap("complex_field", complexField);
+        return value;
+    }
 }
 ```
 
@@ -108,21 +123,32 @@ public final class NestedType {
 ```java
 package com.example.dto;
 
+import com.datastax.driver.core.KeyspaceMetadata;
+import com.datastax.driver.core.UDTValue;
+
+@SuppressWarnings("all")
 public final class UserType {
-  public final int bar;
-  public final NestedType nested;
-  
-  public UserType(
-    final int bar,
-    final NestedType nested) {
-      this.bar = bar;
-      this.nested = nested;
+    public final int bar;
+    public final NestedType nested;
+    
+    public UserType(
+            final int bar,
+            final NestedType nested) {
+        this.bar = bar;
+        this.nested = nested;
     }
 
-  public UserType(final com.datastax.driver.core.UDTValue value) {
-    this.bar = value.getInt("bar");
-    this.nested = new NestedType(value.getUDTValue("nested"));
-  }
+    public UserType(final com.datastax.driver.core.UDTValue value) {
+        this.bar = value.getInt("bar");
+        this.nested = new NestedType(value.getUDTValue("nested"));
+    }
+
+    public UDTValue toUDTValue(final KeyspaceMetadata meta) {
+        final UDTValue value = meta.getUserType("user_type").newValue();
+        value.setInt("bar", bar);
+        value.setUDTValue("nested", nested.toUDTValue(meta));
+        return value;
+    }
 }
 ```
 
@@ -130,66 +156,115 @@ public final class UserType {
 ```java
 package com.example.dto;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+
 import java.util.stream.StreamSupport;
 
+import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
+@SuppressWarnings("all")
 public final class MyTable {
-  public final String pkString;
-  public final long pkLong;
-  public final java.util.UUID rim;
-  public final java.time.Instant ram;
-  public final java.util.List<Float> floatList;
-  
-  public static final MyTableFields fields = new MyTableFields();
-  public static final String table = "my_table";
+    public final String pkString;
+    public final long pkLong;
+    public final java.util.UUID rim;
+    public final java.time.Instant ram;
+    public final java.util.List<Float> floatList;
+    
+    public static final MyTableFields fields = new MyTableFields();
+    public static final String table = "my_table";
+    public static final String keyspace = "example";
 
-  public static class MyTableFields {
-    private MyTableFields() {}
-    public final String pkString = "pk_string";
-    public final String pkLong = "pk_long";
-    public final String rim = "rim";
-    public final String ram = "ram";
-    public final String floatList = "float_list";
-  }
+    public static class MyTableFields {
+        private MyTableFields() {}
+        public final String pkString = "pk_string";
+        public final String pkLong = "pk_long";
+        public final String rim = "rim";
+        public final String ram = "ram";
+        public final String floatList = "float_list";
+    }
 
-  public MyTable(
-    final String pkString,
-    final long pkLong,
-    final java.util.UUID rim,
-    final java.time.Instant ram,
-    final java.util.List<Float> floatList) {
-      this.pkString = pkString;
-      this.pkLong = pkLong;
-      this.rim = rim;
-      this.ram = ram;
-      this.floatList = floatList;
-  }
-  
-  public static java.util.List<MyTable> all(final ResultSet result) {
-    Builder<MyTable> builder = ImmutableList.builder();
-    StreamSupport
-      .stream(result.spliterator(), false)
-      .map(MyTable::fromRow)
-      .forEach(builder::add);
-    return builder.build();
-  }
+    public MyTable(
+            final String pkString,
+            final long pkLong,
+            final java.util.UUID rim,
+            final java.time.Instant ram,
+            final java.util.List<Float> floatList) {
+        this.pkString = pkString;
+        this.pkLong = pkLong;
+        this.rim = rim;
+        this.ram = ram;
+        this.floatList = floatList;
+    }
+    
+    public static java.util.List<MyTable> all(final ResultSet result) {
+        Builder<MyTable> builder = ImmutableList.builder();
+        StreamSupport
+            .stream(result.spliterator(), false)
+            .map(MyTable::fromRow)
+            .forEach(builder::add);
+        return builder.build();
+    }
 
-  public static MyTable one(final ResultSet rs) {
-    return fromRow(rs.one());
-  }
+    public static MyTable one(final ResultSet rs) {
+        return fromRow(rs.one());
+    }
 
-  private static MyTable fromRow(final Row row) {
-    return new MyTable(
-    row.getString("pk_string"),
-    row.getLong("pk_long"),
-    row.getUUID("rim"),
-    row.getDate("ram").toInstant(),
-    row.getList("float_list", Float.class));
-  }
+    private static MyTable fromRow(final Row row) {
+        return new MyTable(
+        row.getString("pk_string"),
+        row.getLong("pk_long"),
+        row.getUUID("rim"),
+        row.getDate("ram").toInstant(),
+        row.getList("float_list", Float.class));
+    }
+
+    public static Select select(final Session session) {
+        return QueryBuilder
+          .select()
+          .all()
+          .from(keyspace, table);
+    }
+
+    public Statement insert(final Session session) {
+        final KeyspaceMetadata meta = session.getCluster().getMetadata().getKeyspace("example");
+        return QueryBuilder
+                .insertInto(keyspace, table)
+                .value("pk_string", pkString)
+                .value("pk_long", pkLong)
+                .value("rim", rim)
+                .value("ram", new java.util.Date(ram.toEpochMilli()))
+                .value("float_list", floatList);
+    }
+
+    public Statement update(final Session session) {
+        final KeyspaceMetadata meta = session.getCluster().getMetadata().getKeyspace("example");
+        return QueryBuilder
+                .update(keyspace, table)
+                .with(set("float_list", floatList))
+                .where(eq("pk_string", pkString))
+                .and(eq("pk_long", pkLong))
+                .and(eq("rim", rim))
+                .and(eq("ram", new java.util.Date(ram.toEpochMilli())));
+    }
+
+    public Statement delete(final Session session) {
+        final KeyspaceMetadata meta = session.getCluster().getMetadata().getKeyspace("example");
+        return QueryBuilder
+                .delete()
+                .from(keyspace, table)
+                .where(eq("pk_string", pkString))
+                .and(eq("pk_long", pkLong))
+                .and(eq("rim", rim))
+                .and(eq("ram", new java.util.Date(ram.toEpochMilli())));
+    }
 }
 ```
 
@@ -200,7 +275,7 @@ The script takes a YAML file that describes the Cassandra user defined types and
 
 ```sh
 $ ccgen -h
-usage: ccgen [-h] [--java JAVA_SOURCE_DIR] [--cql CQL_SOURCE_FILE]
+usage: ccgen [-h] [--java JAVA_OUTPUT_DIR] [--cql CQL_FILE]
              YAML_FILES [YAML_FILES ...]
 
 Generate CQL DDL and Java POJOs from YAML descriptions of Cassandra tables.
@@ -211,13 +286,16 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --java JAVA_SOURCE_DIR, -j JAVA_SOURCE_DIR
+  --java JAVA_OUTPUT_DIR, -j JAVA_OUTPUT_DIR
                         Output directory for the generated Java source files.
                         Directories for packages will be created underneath if
                         they do not exist.
-  --cql CQL_SOURCE_FILE, -c CQL_SOURCE_FILE
-                        Output directory for the generated CQL source files.
+  --cql CQL_FILE, -c CQL_FILE
+                        File name for the generated CQL file. Fully qualified
+                        directory and filename (e.g. src/generated/cql/create-
+                        tables.cql)
 ```
+
 ## Caveats
 - `timestamp` fields will be `java.time.Instant`, not `java.util.Date`.
 - Cassandra `tuple` type is not supported.

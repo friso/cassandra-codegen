@@ -1,7 +1,7 @@
 import os
 import argparse
 
-from jinja2 import Template, Environment, FileSystemLoader
+from jinja2 import Template, Environment, PackageLoader
 
 from .cql import CqlGenerator
 from .java import JavaGenerator
@@ -19,7 +19,7 @@ def _main():
     cql_dir, cql_file = os.path.split(args.cql)
     java_dir = args.java
 
-    env = Environment(loader=FileSystemLoader('/Users/friso/code/cassandra-codegen/ccgen/templates/'))
+    env = Environment(loader=PackageLoader('ccgen','templates'))
     for fn in args.files:
         cql_generator = CqlGenerator(fn, cql_dir, cql_file)
         for f in cql_generator.files:
@@ -35,11 +35,11 @@ def _parse_args():
     parser = argparse.ArgumentParser(description='Generate CQL DDL and Java POJOs from YAML descriptions of Cassandra tables.')
 
     parser.add_argument(
-        '--java', '-j', metavar='JAVA_SOURCE_DIR', type=str, required=False, default='.',
+        '--java', '-j', metavar='JAVA_OUTPUT_DIR', type=str, required=False, default='.',
         help="Output directory for the generated Java source files. Directories for packages will be created underneath if they do not exist.")
     parser.add_argument(
-        '--cql', '-c', metavar='CQL_SOURCE_FILE', type=str, required=False, default='./create-script.cql',
-        help="Output directory for the generated CQL source files.")
+        '--cql', '-c', metavar='CQL_FILE', type=str, required=False, default='./create-tables.cql',
+        help="File name for the generated CQL file. Fully qualified directory and filename (e.g. src/generated/cql/create-tables.cql)")
 
     parser.add_argument(
         'files', metavar='YAML_FILES', type=str, nargs='+',
